@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block self_head_css_js %}
+    <script src="{% static 'layer/layer.js' %}"></script>
+    <script src="{% static 'js/base.js' %}"></script>
+    <!-- script src="/static/plugins/datatables/jquery.dataTables.min.js"></script -->
+    <!-- script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script -->
+    <!-- script src="/static/plugins/datatables/dataTables.bootstrap.css"></script -->
+
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <form action="" method="post" id="host_form">
+        {% csrf_token %}
+            <div class="box">
+                <div class="box-header">
+                    <div class="col-sm-2" style="padding-left: 0">
+                        <a href="#"><li class="btn btn-success" ><b>添加设备</b></li></a>
+                    </div>
+                    <div class="col-sm-5" style="padding-left: 0px">
+                        <label>
+                            <select name="datacenter" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">数据中心</option>
+                                {% for dc in datacenter_all %}
+                                    {% ifequal dc.name datacenter_name %}
+                                        <option value="{{ dc.name }}" selected> {{ dc.name|slice:":20" }}</option>
+                                    {% else %}
+                                        <option value="{{ dc.name }}"> {{ dc.name|slice:":20" }}</option>
+                                    {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label>
+                            <select name="business" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">业务</option>
+                                {% for bus in  business_all %}
+                                    {% ifequal bus.name business_name %}
+                                        <option value="{{ bus.name }}" selected> {{ bus.name|slice:":20" }} </option>
+                                    {% else %}
+                                        <option value="{{ bus.name }}"> {{ bus.name|slice:":20" }} </option>
+                                    {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label>
+                            <select name="status" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">主机状态</option>
+                                {% for status in host_status_all %}
+                                    {% ifequal status.0 host_status %}
+                                        <option value="{{ status.0 }}" selected> {{ status.1 }}</option>
+                                    {% else %}
+                                        <option value="{{ status.0 }}"> {{ status.1 }}</option>
+                                    {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label>
+                            <select name="type" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">主机类型</option>
+                                {% for type in host_type_all %}
+                                    {% ifequal type.0 host_type %}
+                                        <option value="{{ type.0 }}" selected> {{ type.1 }}</option>
+                                    {% else %}
+                                        <option value="{{ type.0 }}"> {{ type.1 }}</option>
+                                    {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+                    </div>
+                    <div class="col-sm-4" style="padding-right: 0;">
+                        <div class="input-group inline-group padding-right: 10px">
+                            <input type="text" class="form-control m-b " id="search_input" name="keyword" value="{{ keyword }}" placeholder="Search">
+                            <input type="text" style="display: none">
+                            <div class="input-group-btn ">
+                                <button id='search_btn' href="#" type="button" class="btn btn-primary "  onclick="change_info()"> <b>&nbsp;搜索&nbsp;</b>
+                                </button>
+                                <a href="#" onclick="return export_excel()"><li name="export" class="btn btn-success search-btn-excel"><b>&nbsp;导出&nbsp;</b></li></a>
+                                <a href="#" onclick="return export_excel()"><li name="export" class="btn btn-success search-btn-excel"><b>&nbsp;导入&nbsp;</b></li></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="export"></div>
+                </div>
+                <!-- /.box-header -->
+
+                <div class="col-md-5">
+                    <label for="page_len">
+                        <select name="page_len" id="page_len" class="form-control m-b input-sm" onchange="change_info()">
+                            {% ifequal page_len '10' %}
+                                <option value="10" selected>10</option>
+                            {% else %}
+                                <option value="10">10</option>
+                            {% endifequal %}
+                            {% ifequal page_len '20' %}
+                                <option value="20" selected>20</option>
+                            {% else %}
+                                <option value="20">20</option>
+                            {% endifequal %}
+                            {% ifequal page_len '50' %}
+                                <option value="50" selected>50</option>
+                            {% else %}
+                                <option value="50">50</option>
+                            {% endifequal %}
+                            {% ifequal page_len '100' %}
+                                <option value="100" selected>100</option>
+                            {% else %}
+                                <option value="100">100</option>
+                            {% endifequal %}
+                            {% ifequal page_len '200' %}
+                                <option value="200" selected>200</option>
+                            {% else %}
+                                <option value="200">200</option>
+                            {% endifequal %}
+                        </select>
+                    </label>
+                </div>
+                <!-- ./col-md-5 -->
+
+                <div class="box-body">
+                    <table class="table table-striped table-bordered" id="dataform">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input id="checkall" type="checkbox" class="i-checks" name="checkall" value="checkall" data-editable='false' onclick="check_all('host_form')">
+                                </th>
+                                <th>fqdn名</th>
+                                <th>管理IP</th>
+                                <th>CPU</th>
+                                <th>内存(MB)</th>
+                                <th>所属业务</th>
+                                <th>所属集群</th>
+                                <th class="text-center">功能</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for host in host_list %}
+                                <tr class="even gradeX">
+                                    <td><input type="checkbox" id="id" class="i-checks" value="{{ host.id }}" name="id" /></td>
+                                    <td><a href="#"><li style="list-style-type:none" onclick="return detail(this.value)" value="{{ host.id }}"> {{ host.fqdn_name }}</li></a></td>
+                                    <td>{{ host.host_innerip }}</td>
+                                    <td>{{ host.cpu_core_count }}</td>
+                                    <td>{{ host.mem_mb }}</td>
+                                    <td>{{ host.business }}</td>
+                                    <td>{% for c in host.cluster.all %}{{ c }}{% if not forloop.last %},{% endif %}{% endfor %}</td>
+                                    <td class="text-center" data-editable='false'>
+                                        <!-- a class="btn btn-sm btn-info" target="_blank" href="#" class="btn btn-xsbtn-info">WebSSH</a -->
+                                        <a href="#"><li class="btn btn-sm btn-info" onclick="return tanchu(this.value)" value="{{ host.id }}">编辑</li></a>
+                                        <a value="#" class="btn btn-sm btn-danger host_del">删除</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="row" style="width: auto">
+                        {% include 'paginator.html' %}
+                    </div>
+                    <div>
+                        <div class="btn-group">
+                            <input type="button" id="host_del" class="btn btn-danger"   name="del_button" value="删除设备"/>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.box-body-->
+            </div>
+            <!-- ./box -->
+        </form>
+    </section>
+        <!-- /.content -->
+{#用于接收host_edit.html中layui子层的传值#}
+<!-- input id="handle_status" value="" hidden="hidden" -->
+</div>
+<script>
+    function change_info(){
+        var args = $("#host_form").serialize();
+        window.location = "{% url 'cmdb:hosts' %}?" + args
+    }
+</script>
+<script>
+    function detail(n){
+	    layer.open({
+        type: 2,
+        title: '主机信息',
+        closeBtn: 1,
+        area: ['700px', '550px'],
+	    shadeClose: true, //点击遮罩关闭
+	    content: ['/cmdb/host/detail/' + n]
+        });
+    }
+</script>
+
+{% endblock %}
