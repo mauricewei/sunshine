@@ -133,7 +133,7 @@ class Host(models.Model):
             choices=HOST_STATUS_CHOICES,
             default='free'
     )
-    created_time = models.DateTimeField('创建时间', blank=True)
+    created_time = models.DateTimeField('上架时间', blank=True)
     modified_time = models.DateTimeField('修改时间', auto_now_add=True)
     service_term = models.IntegerField('质保年限', blank=True)
     sla = models.CharField(

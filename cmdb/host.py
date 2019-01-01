@@ -18,19 +18,28 @@ class HostListView(ListView):
     host_status = None
     host_type = None
     keyword = None
+    paginate_by = None
    
-    # 重写get函数，获取request的一些参数
     def get(self, request, *args, **kwargs):
+        """
+        重写get函数，获取我们需要的request参数
+        """
         self.datacenter = request.GET.get('datacenter')
         self.business = request.GET.get('business')
         self.host_status = request.GET.get('status')
         self.host_type = request.GET.get('type')
         self.keyword = request.GET.get('keyword')
+		# 从视图获取每页显示的主机个数默认为10
+		# paginate_by是父类原有的变量，赋值后每页主机个数自动生效
+        self.paginate_by = request.GET.get('paginate_by', '10')
         response = super().get(request, *args, **kwargs)
         return response
 
-    # 重写get_query_set函数，根据条件查询数据库
     def get_queryset(self):
+        """ 
+        重写get_query_set函数，根据条件查询数据库
+        用于实现页面上筛选和搜索功能
+        """
         if self.datacenter:
             self.host_find = self.host_find.filter(datacenter__name__icontains=self.datacenter)
         if self.business:
@@ -55,9 +64,19 @@ class HostListView(ListView):
                     )
         return self.host_find
 
-    # 重写get_context_data函数，添加向模版传输的内容
     def get_context_data(self, **kwargs):
+        """
+        重写get_context_data函数，添加向模版传输的内容
+        """
+
         context = super().get_context_data(**kwargs)
+		# paginator 是 Paginator 的一个实例，
+        # page_obj 是 Page 的一个实例，
+        # is_paginated 是一个布尔变量，用于指示是否已分页。
+        paginator = context.get('paginator')
+        page = context.get('page_obj')
+        is_paginated = context.get('is_paginated')
+        pagination_data = self.pagination_data(paginator, page, is_paginated)
         context.update(
                 {
                 'datacenter_all': self.datacenter_all,
@@ -68,31 +87,99 @@ class HostListView(ListView):
                 'business_name': self.business,
                 'host_status': self.host_status,
                 'host_type': self.host_type,
+                'paginate_by': self.paginate_by,
                 }
                 )
+        context.update(pagination_data)
         return context
+
+    def pagination_data(self, paginator, page, is_paginated):
+        """
+        该函数用来生成分页程序的变量数据
+        这些变量将通过get_context_data函数传输到模版
+        """
+        if not is_paginated:
+            return {}
+
+		# 当前页左边连续的页码号，初始值为空
+        left = []
+		# 当前页右边连续的页码号，初始值为空
+        right = []
+		# 表示第 1 页页码后是否需要显示省略号
+        left_has_more = False
+		# 表示最后一页页码前是否需要显示省略号
+        right_has_more = False
+		# 表示是否需要显示第 1 页的页码号
+        first = False
+		# 表示是否需要显示最后一页的页码号
+        last = False
+        
+        page_number = page.number
+        total_pages = paginator.num_pages
+        page_range = paginator.page_range
+
+        if page_number == 1:
+			# 获取当前页码后的3个页码
+            right = page_range[page_number:page_number + 3]
+            if right[-1] < total_pages - 1:
+                right_has_more = True
+            if right[-1] < total_pages:
+                last = True
+        elif page_number == total_pages:
+			# 获取当前页码前连续3个页码
+            left = page_range[(page_number - 4) if (page_number - 4) > 0 else 0:page_number -1]
+            if left[0] > 2:
+                left_has_more = True
+            if left[0] > 1:
+                first = True
+        else:
+            left = page_range[(page_number - 4) if (page_number - 4) > 0 else 0:page_number -1]
+            right = page_range[page_number:page_number + 3]
+            if left[0] > 2:
+                left_has_more = True
+            if left[0] > 1:
+                first = True
+            if right[-1] < total_pages - 1:
+                right_has_more = True
+            if right[-1] < total_pages:
+                last = True
+
+        data = {
+            'left': left,
+            'right': right,
+            'left_has_more': left_has_more,
+            'right_has_more': right_has_more,
+            'first': first,
+            'last': last,
+        }
+        return data
 
 class HostDetailView(DetailView):
     model = Host
     template_name = 'cmdb/host_detail.html'
 
-    # 重写函数，传递指定参数给模版
     def get_context_data(self, **kwargs):
+        """
+        重写函数，传递指定参数给模版
+        """
         host = super().get_object()
         context = super().get_context_data(**kwargs)
-        cluster = host.cluster.all()
+        cluster_this = host.cluster.all()
         host_type_this = ''
         host_status_this = ''
         os_type_this = ''
 
+        # 用于生成主机详情页的主机类型字段的值
         for htype in Host.HOST_TYPE_CHOICES:
             if htype[0] == host.host_type:
                 host_type_this = htype[1]
 
+        # 用于生成主机详情页的主机状态字段的值
         for status in Host.HOST_STATUS_CHOICES:
             if status[0] == host.host_status:
                 host_status_this = status[1]
 
+        # 用于生成主机详情页的系统类型字段的值
         for otype in Host.OS_TYPE_CHOICES:
             if otype[0] == host.os_type:
                 os_type_this = otype[1]
@@ -102,7 +189,7 @@ class HostDetailView(DetailView):
                 'host_type_this': host_type_this,
                 'host_status_this': host_status_this,
                 'os_type_this': os_type_this,
-                'cluster': cluster,
+                'cluster_this': cluster_this,
                 }
                 )
         return context

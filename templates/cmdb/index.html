@@ -2,12 +2,14 @@
 {% load staticfiles %}
 
 {% block self_head_css_js %}
+	<!-- Web弹层组件 -->
     <script src="{% static 'layer/layer.js' %}"></script>
+	<!-- 用于checkbox的全选和反选 -->
     <script src="{% static 'js/base.js' %}"></script>
-    <!-- script src="/static/plugins/datatables/jquery.dataTables.min.js"></script -->
-    <!-- script src="/static/plugins/datatables/dataTables.bootstrap.min.js"></script -->
-    <!-- script src="/static/plugins/datatables/dataTables.bootstrap.css"></script -->
-
+	<!-- 给HTML表格添加高级交互控件 --> 
+    <script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables/dataTables.bootstrap.min.js' %}></script>
+    <script src="{% static 'plugins/datatables/dataTables.bootstrap.css' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -95,29 +97,29 @@
                 <!-- /.box-header -->
 
                 <div class="col-md-5">
-                    <label for="page_len">
-                        <select name="page_len" id="page_len" class="form-control m-b input-sm" onchange="change_info()">
-                            {% ifequal page_len '10' %}
+                    <label for="paginate_by">
+                        <select name="paginate_by" id="paginate_by" class="form-control m-b input-sm" onchange="change_info()">
+                            {% ifequal paginate_by '10' %}
                                 <option value="10" selected>10</option>
                             {% else %}
                                 <option value="10">10</option>
                             {% endifequal %}
-                            {% ifequal page_len '20' %}
+                            {% ifequal paginate_by '20' %}
                                 <option value="20" selected>20</option>
                             {% else %}
                                 <option value="20">20</option>
                             {% endifequal %}
-                            {% ifequal page_len '50' %}
+                            {% ifequal paginate_by '50' %}
                                 <option value="50" selected>50</option>
                             {% else %}
                                 <option value="50">50</option>
                             {% endifequal %}
-                            {% ifequal page_len '100' %}
+                            {% ifequal paginate_by '100' %}
                                 <option value="100" selected>100</option>
                             {% else %}
                                 <option value="100">100</option>
                             {% endifequal %}
-                            {% ifequal page_len '200' %}
+                            {% ifequal paginate_by '200' %}
                                 <option value="200" selected>200</option>
                             {% else %}
                                 <option value="200">200</option>
@@ -128,7 +130,7 @@
                 <!-- ./col-md-5 -->
 
                 <div class="box-body">
-                    <table class="table table-striped table-bordered" id="dataform">
+                    <table class="table table-striped table-bordered" id="host_list_table">
                         <thead>
                             <tr>
                                 <th>
@@ -181,12 +183,28 @@
 <!-- input id="handle_status" value="" hidden="hidden" -->
 </div>
 <script>
+    // 调用HTML表格组件调整host_list_table表格
+    $(function () {
+        $('#host_list_table').DataTable({
+        "paging": false,
+        "lengthChange": false,
+        "searching": false,
+        "ordering": true,
+        "info": false,
+        "autoWidth": true,
+        "bStateSave": true
+        });
+    });
+</script>
+<script>
+    // 重新加载页面，并传入最新筛选参数
     function change_info(){
         var args = $("#host_form").serialize();
         window.location = "{% url 'cmdb:hosts' %}?" + args
     }
 </script>
 <script>
+    // 调用弹层控件函数layer，弹出主机详情窗口
     function detail(n){
 	    layer.open({
         type: 2,

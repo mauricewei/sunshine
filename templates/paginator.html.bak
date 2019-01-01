@@ -1,0 +1,39 @@
+<div class="col-sm-6">
+    <div class="dataTables_paginate paging_simple_numbers" id="editable_paginate">
+        <ul class="pagination" style="margin-top: 0; float: right">
+            {% if is_paginated %}
+                {% if first %}
+                    <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
+                        <a class="page" href="?page=1">1</a>
+                    </li>
+                {% endif %}
+                {% if left %}
+                    {% if left_has_more %}
+                        <span>...</span>
+                    {% endif %}
+                    {% for i in left %}
+                        <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
+                            <a class="page" href="?page={{ i }}">{{ i }}</a>
+                        </li>
+                    {% endfor%}
+                {% endif %}
+                <li class="paginate_button active"  aria-controls="editable" tabindex="0"><a class="page" href="?page={{ page_obj.number }}">{{ page_obj.number }}</a></li>
+                {% if right %}
+                    {% for i in right %}
+                        <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
+                            <a class="page" href="?page={{ i }}">{{ i }}</a>
+                        </li>
+                    {% endfor %}
+                    {% if right_has_more %}
+                        <span>...</span>
+                    {% endif %}
+                {% endif %}
+                {% if last %}
+                    <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
+                    	<a class="page" href="?page={{ paginator.num_pages }}">{{ paginator.num_pages }}</a>
+                    </li>
+                {% endif %}
+            {% endif %}
+        </ul>
+    </div>
+</div>
