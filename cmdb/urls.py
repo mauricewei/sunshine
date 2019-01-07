@@ -20,6 +20,6 @@ app_name = 'cmdb'
 urlpatterns = [
     path('host/', host.HostListView.as_view(), name='hosts'),
     path('host/detail/<int:pk>/', host.HostDetailView.as_view(), name='host_detail'),
-    path('host/add/', host.host_add, name='host_add'),
+    path('host/add/', host.HostAddView.as_view(), name='host_add'),
     path('host/edit/<int:pk>/', host.HostEditView.as_view(), name='host_edit'),
 ]

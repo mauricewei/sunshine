@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect, render_to_response
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.views.generic import ListView, DetailView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.db.models import Q
 from .models import Host, Business, Datacenter, Cluster
 from .form import HostForm
@@ -198,35 +198,32 @@ class HostDetailView(DetailView):
                 )
         return context
 
-def host_add(request): 
-    if request.method == 'POST':
-        host_form = HostForm(request.POST)
-        if host_form.is_valid():
-            host_form.save()
-            tips = '添加成功！'
-            display_control = ''
-            context = {
-                'host_form': host_form,
-                'tips': tips,
-                'display_control': display_control,
-            }
-        else:
-            tips = '添加失败！'
-            display_control = ''
-            context = {
-                'host_form': host_form,
-                'tips': tips,
-                'display_control': display_control,
-            }
-        return render(request, 'cmdb/host_add.html', context)
-    else:
-        host_form = HostForm()
-        display_control = 'none'
-        context = {
-            'host_form': host_form,
-            'display_control': display_control
-            }
-        return render(request, 'cmdb/host_add.html', context)
+class HostAddView(CreateView):
+    model = Host
+    template_name_suffix = '_add'
+    form_class = HostForm
+
+    def form_invalid(self, form):
+        return self.render_to_response(
+                self.get_context_data(
+                    form=form,
+                    tips='添加失败！',
+                    display_control=' '
+                    )
+                )
+
+    def form_valid(self, form):
+        """
+        重写函数，使其返值为对host_add.html模版的渲染，并将指定参数传递给给模版
+        """
+        self.object = form.save()
+        return self.render_to_response(
+                self.get_context_data(
+                    form=self.form_class(),
+                    tips='添加成功！',
+                    display_control=' '
+                    )
+                )
 
 class HostEditView(UpdateView):
     model = Host
@@ -245,4 +242,9 @@ class HostEditView(UpdateView):
         重写函数，使其返值为对host_edit.html模版的渲染，并将status的参数传递给给模版
         """
         self.object = form.save()
-        return render(self.request, 'cmdb/host_edit.html', {'status': '1'})
+        return self.render_to_response(
+                self.get_context_data(
+                    status='1'
+                    )
+                )
+
