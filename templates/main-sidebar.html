@@ -1,5 +1,4 @@
 <aside class="main-sidebar">
-
     <!-- sidebar: style can be found in sidebar.less -->
     <section class="sidebar">
     <div style="height: 60px">
@@ -23,14 +22,15 @@
         <!-- Optionally, you can add icons to the links -->
         <!-- li class="active"><a href="#"><i class="fa fa-link"></i> <span>主机管理</span></a></li -->
         <!-- li><a href="#"><i class="fa fa-link"></i> <span>Another Link</span></a></li -->
-        <li class="treeview">
+        <li class="treeview"> 
+
             <a href="#"><i class="fa fa-database"></i> <span>资产管理</span>
             <span class="pull-right-container">
                 <i class="fa fa-angle-left pull-right"></i>
             </span>
             </a>
             <ul class="treeview-menu">
-                <li><a href="#">主机管理</a></li>
+                <li><a href="{% url 'cmdb:hosts' %}">主机管理</a></li>
                 <li><a href="#">机房管理</a></li>
                 <li><a href="#">机柜管理</a></li>
             </ul>
@@ -43,8 +43,8 @@
             </span>
             </a>
             <ul class="treeview-menu">
-                <li><a href="#">模块管理</a></li>
                 <li><a href="#">集群管理</a></li>
+                <li><a href="#">模块管理</a></li>
                 <li><a href="#">业务管理</a></li>
                 <li><a href="#">业务拓扑</a></li>
             </ul>

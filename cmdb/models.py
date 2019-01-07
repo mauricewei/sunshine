@@ -116,35 +116,32 @@ class Host(models.Model):
             ('other', '其他'),
             )
 
-    host_innerip = models.GenericIPAddressField('管理IP地址', max_length=20)
-    manufacturer = models.CharField('厂商', max_length=100, blank=True)
-    sn = models.CharField('SN号', max_length=60, blank=True)
-    manager = models.CharField('主要维护人', max_length=60, blank=True)
-    bak_manager = models.CharField('备份维护人', max_length=60, blank=True)
+
     host_type = models.CharField(
             "主机类型",
             max_length=60,
             choices=HOST_TYPE_CHOICES,
             blank=True,
             )
-    host_status = models.CharField(
-            '主机状态',
-            max_length=60,
-            choices=HOST_STATUS_CHOICES,
-            default='free'
-    )
-    created_time = models.DateTimeField('上架时间', blank=True)
-    modified_time = models.DateTimeField('修改时间', auto_now_add=True)
-    service_term = models.IntegerField('质保年限', blank=True)
-    sla = models.CharField(
-            'SLA级别',
-            max_length=60,
-            choices=SLA_CHOICES,
+    host_name = models.CharField('主机名或fqdn名', max_length=100) 
+    ipmi_ip = models.GenericIPAddressField(
+            'IPMI地址',
+            max_length=20,
+            null=True,
             blank=True,
     )
+    host_innerip = models.GenericIPAddressField('管理IP地址', max_length=20, unique=True)
+    host_outerip = models.GenericIPAddressField(
+            '外网IP地址',
+            max_length=20,
+            null=True,
+            blank=True,
+    )
+    other_ip = models.CharField("其它IP", max_length=60, blank=True)
+    mac_addr = models.CharField('管理网MAC地址', max_length=60, blank=True)
     cpu_module = models.CharField('cpu型号', max_length=100, blank=True)
-    cpu_num = models.IntegerField('cpu个数', blank=True)
-    cpu_core_count = models.IntegerField('cpu逻辑核心数', blank=True)
+    cpu_num = models.CharField('cpu个数', max_length=100, blank=True)
+    cpu_core_count = models.CharField('cpu逻辑核心数', max_length=100, blank=True)
     mem_mb = models.CharField('内存大小(MB)', max_length=60, blank=True)
     disk_gb = models.CharField('磁盘大小(GB)', max_length=60, blank=True)
     os_type = models.CharField(
@@ -156,23 +153,6 @@ class Host(models.Model):
     )
     os_name = models.CharField('操作系统名称', max_length=60, blank=True)
     os_bit = models.CharField('操作系统位数', max_length=60, blank=True)
-    host_name = models.CharField('主机名称', max_length=100, blank=True)
-    fqdn_name = models.CharField('fqdn名称', max_length=100, blank=True) 
-    ipmi_ip = models.GenericIPAddressField(
-            'IPMI地址',
-            max_length=20,
-            null=True,
-            blank=True,
-    )
-    host_outerip = models.GenericIPAddressField(
-            '外网IP地址',
-            max_length=20,
-            null=True,
-            blank=True,
-    )
-    other_ip = models.CharField("其它IP", max_length=60, blank=True)
-    mac_addr = models.CharField('内网MAC地址', max_length=60, blank=True)
-    comment = models.TextField('备注', blank=True)
     business = models.ForeignKey(
             Business,
             verbose_name='所属业务',
@@ -199,6 +179,26 @@ class Host(models.Model):
             null=True,
             blank=True,
             )
+    host_status = models.CharField(
+            '主机状态',
+            max_length=60,
+            choices=HOST_STATUS_CHOICES,
+            blank=True,
+    )
+    sn = models.CharField('SN号', max_length=60, blank=True)
+    manufacturer = models.CharField('厂商', max_length=100, blank=True)
+    service_term = models.CharField('质保年限', max_length=100, blank=True)
+    sla = models.CharField(
+            'SLA级别',
+            max_length=60,
+            choices=SLA_CHOICES,
+            blank=True,
+    )
+    created_time = models.DateTimeField('上架时间', null=True, blank=True)
+    modified_time = models.DateTimeField('上次修改时间', auto_now_add=True)
+    manager = models.CharField('主要维护人', max_length=60, blank=True)
+    bak_manager = models.CharField('备份维护人', max_length=60, blank=True)
+    comment = models.TextField('备注', blank=True)
     
     def __str__(self):
-        return self.fqdn_name
+        return self.host_name

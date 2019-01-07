@@ -27,43 +27,19 @@
                             <td>{{ host_type_this }}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>主机名称</td>
+                            <td>主机名或fqdn名</td>
                             <td>{{ host.host_name }}</td>
-                        </tr>
-                        <tr class="even gradeX">
-                            <td>fqdn名称</td>
-                            <td>{{ host.fqdn_name }}</td>
-                        </tr>
-                        <tr class="even gradeX">
-                            <td>主机状态</td>
-                            <td>{{ host_status_this }}</td>
-                        </tr>
-                        <tr class="even gradeX">
-                            <td>所在数据中心</td>
-                            <td>{{ host.datacenter }}</td>
-                        </tr>
-                        <tr class="even gradeX">
-                            <td>所在机柜</td>
-                            <td>{{ host.cabinet }}</td>
-                        </tr>
-                        <tr class="even gradeX">
-                            <td>所属业务</td>
-                            <td>{{ host.business }}</td>
-                        </tr>
-                        <tr class="even gradeX">
-                            <td>所属集群</td>
-                            <td>{% for c in cluster_this %}{{ c }}{% if not forloop.last %},{% endif %}{% endfor %}</td>
                         </tr>
                         <tr class="even gradex">
                             <td>IPMI地址</td>
                             <td>{{ host.ipmi_ip }}</td>
                         </tr>
                         <tr class="even gradex">
-                            <td>管理IP</td>
+                            <td>管理IP地址</td>
                             <td>{{ host.host_innerip }}</td>
                         </tr>
                         <tr class="even gradex">
-                            <td>外网IP</td>
+                            <td>外网IP地址</td>
                             <td>{{ host.host_outerip }}</td>
                         </tr>
                         <tr class="even gradex">
@@ -75,40 +51,60 @@
                             <td>{{ host.mac_addr }}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>CPU型号</td>
+                            <td>cpu型号</td>
                             <td>{{ host.cpu_module }}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>CPU个数</td>
+                            <td>cpu个数</td>
                             <td>{{ host.cpu_core_count }}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>CPU逻辑核心数</td>
+                            <td>cpu逻辑核心数</td>
                             <td>{{ host.cpu_core_count }}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>内存大小</td>
-                            <td>{{ host.mem_mb }}M</td>
+                            <td>内存大小(MB)</td>
+                            <td>{% if not host.mem_mb %}{% else %}{{ host.mem_mb }}M{% endif %}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>硬盘大小</td>
-                            <td> {{ host.disk_gb }}G</td>
+                            <td>磁盘大小(GB)</td>
+                            <td>{% if not host.disk_gb %}{% else %}{{ host.disk_gb }}G{% endif %}</td>
+                        </tr>
+                        <tr class="even gradex">
+                            <td>操作系统类型</td>
+                            <td>{{ os_type_this }}</td>
+                        </tr>
+                        <tr class="even gradex">
+                            <td>操作系统名称</td>
+                            <td>{{ host.os_name }}</td>
+                        </tr>
+                        <tr class="even gradex">
+                            <td>操作系统位数</td>
+                            <td>{{ host.os_bit }}</td>
+                        </tr>
+                        <tr class="even gradeX">
+                            <td>所属业务</td>
+                            <td>{{ host.business }}</td>
+                        </tr>
+                        <tr class="even gradeX">
+                            <td>所属集群</td>
+                            <td>{% for c in cluster_this %}{{ c }}{% if not forloop.last %},{% endif %}{% endfor %}</td>
+                        </tr>
+                        <tr class="even gradeX">
+                            <td>所属数据中心</td>
+                            <td>{{ host.datacenter }}</td>
+                        </tr>
+                        <tr class="even gradeX">
+                            <td>所属机柜</td>
+                            <td>{{ host.cabinet }}</td>
+                        </tr>
+                        <tr class="even gradeX">
+                            <td>主机状态</td>
+                            <td>{{ host_status_this }}</td>
                         </tr>
                         <tr class="even gradeX">
                             <td>SN号</td>
                             <td>{{ host.sn }}</td>
-                        </tr>
-                        <tr class="even gradex">
-                            <td>系统类型</td>
-                            <td>{{ os_type_this }}</td>
-                        </tr>
-                        <tr class="even gradex">
-                            <td>系统名称</td>
-                            <td>{{ host.os_name }}</td>
-                        </tr>
-                        <tr class="even gradex">
-                            <td>系统位数</td>
-                            <td>{{ host.os_bit }}</td>
                         </tr>
                         <tr class="even gradex">
                             <td>厂商</td>
@@ -127,15 +123,15 @@
                             <td>{{ host.created_time }}</td>
                         </tr>
                         <tr class="even gradex">
-                            <td>信息修改时间</td>
+                            <td>上次修改时间</td>
                             <td>{{ host.modified_time }}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>主要责任人</td>
+                            <td>主要维护人</td>
                             <td>{{ host.manager }}</td>
                         </tr>
                         <tr class="even gradeX">
-                            <td>备份责任人</td>
+                            <td>备份维护人</td>
                             <td>{{ host.bak_manager }}</td>
                         </tr>
                         <tr class="even gradeX">

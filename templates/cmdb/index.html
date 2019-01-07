@@ -25,7 +25,7 @@
             <div class="box">
                 <div class="box-header">
                     <div class="col-sm-2" style="padding-left: 0">
-                        <a href="#"><li class="btn btn-success" ><b>添加设备</b></li></a>
+                        <a href="{% url 'cmdb:host_add' %}"><li class="btn btn-success" ><b>添加设备</b></li></a>
                     </div>
                     <div class="col-sm-5" style="padding-left: 0px">
                         <label>
@@ -136,7 +136,7 @@
                                 <th>
                                     <input id="checkall" type="checkbox" class="i-checks" name="checkall" value="checkall" data-editable='false' onclick="check_all('host_form')">
                                 </th>
-                                <th>fqdn名</th>
+                                <th>主机名或fqdn名</th>
                                 <th>管理IP</th>
                                 <th>CPU</th>
                                 <th>内存(MB)</th>
@@ -149,7 +149,7 @@
                             {% for host in host_list %}
                                 <tr class="even gradeX">
                                     <td><input type="checkbox" id="id" class="i-checks" value="{{ host.id }}" name="id" /></td>
-                                    <td><a href="#"><li style="list-style-type:none" onclick="return detail(this.value)" value="{{ host.id }}"> {{ host.fqdn_name }}</li></a></td>
+                                    <td><a href="#"><li style="list-style-type:none" onclick="return detail(this.value)" value="{{ host.id }}"> {{ host.host_name }}</li></a></td>
                                     <td>{{ host.host_innerip }}</td>
                                     <td>{{ host.cpu_core_count }}</td>
                                     <td>{{ host.mem_mb }}</td>
@@ -180,7 +180,7 @@
     </section>
         <!-- /.content -->
 {#用于接收host_edit.html中layui子层的传值#}
-<!-- input id="handle_status" value="" hidden="hidden" -->
+<input id="handle_status" value="" hidden="hidden">
 </div>
 <script>
     // 调用HTML表格组件调整host_list_table表格
@@ -215,6 +215,28 @@
 	    content: ['/cmdb/host/detail/' + n]
         });
     }
+</script>
+<script>
+function tanchu(n){
+    layer.open({
+    type: 2,
+    title: '修改主机信息',
+    closeBtn: 1,
+    area: ['700px', '550px'],
+    shadeClose: true, //点击遮罩关闭
+    content: ['/cmdb/host/edit/' + n,],
+    end:function(){
+            var handle_status = $("#handle_status").val();
+            if ( handle_status == '1' ) {
+                layer.msg('保存成功！',{
+                    icon: 1,
+                    time: 2000 //2秒关闭（如果不配置，默认是3秒）
+                });
+                window.location.reload();
+            }
+        }
+  });
+}
 </script>
 
 {% endblock %}

@@ -1,7 +1,10 @@
-from django.shortcuts import render, get_object_or_404
-from django.views.generic import ListView, DetailView
+from django.shortcuts import render, get_object_or_404, redirect, render_to_response
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.views.generic import ListView, DetailView, UpdateView
 from django.db.models import Q
 from .models import Host, Business, Datacenter, Cluster
+from .form import HostForm
 
 class HostListView(ListView):
     model = Host
@@ -24,6 +27,7 @@ class HostListView(ListView):
         """
         重写get函数，获取我们需要的request参数
         """
+
         self.datacenter = request.GET.get('datacenter')
         self.business = request.GET.get('business')
         self.host_status = request.GET.get('status')
@@ -50,7 +54,7 @@ class HostListView(ListView):
             self.host_find = self.host_find.filter(host_type__icontains=self.host_type)
         if self.keyword:
             self.host_find = self.host_find.filter(
-                    Q(fqdn_name__icontains=self.keyword) |
+                    Q(host_name__icontains=self.keyword) |
                     Q(ipmi_ip__icontains=self.keyword) |
                     Q(host_outerip__icontains=self.keyword) |
                     Q(host_innerip__icontains=self.keyword) |
@@ -193,3 +197,52 @@ class HostDetailView(DetailView):
                 }
                 )
         return context
+
+def host_add(request): 
+    if request.method == 'POST':
+        host_form = HostForm(request.POST)
+        if host_form.is_valid():
+            host_form.save()
+            tips = '添加成功！'
+            display_control = ''
+            context = {
+                'host_form': host_form,
+                'tips': tips,
+                'display_control': display_control,
+            }
+        else:
+            tips = '添加失败！'
+            display_control = ''
+            context = {
+                'host_form': host_form,
+                'tips': tips,
+                'display_control': display_control,
+            }
+        return render(request, 'cmdb/host_add.html', context)
+    else:
+        host_form = HostForm()
+        display_control = 'none'
+        context = {
+            'host_form': host_form,
+            'display_control': display_control
+            }
+        return render(request, 'cmdb/host_add.html', context)
+
+class HostEditView(UpdateView):
+    model = Host
+    template_name_suffix = '_edit'
+    form_class = HostForm
+
+    def get_success_url(self):
+        """ 
+        重写函数，将表单数据填写成功后返回的url指定为/cmdb/host/edit/x
+        """
+        path = self.request.path
+        return path
+
+    def form_valid(self, form):
+        """
+        重写函数，使其返值为对host_edit.html模版的渲染，并将status的参数传递给给模版
+        """
+        self.object = form.save()
+        return render(self.request, 'cmdb/host_edit.html', {'status': '1'})
