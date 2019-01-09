@@ -1,7 +1,5 @@
-from django.shortcuts import render, render_to_response, HttpResponse
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.shortcuts import render, HttpResponse
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.db.models import Q
 from .models import Host, Business, Datacenter, Cluster
 from .form import HostForm
