@@ -1,7 +1,7 @@
-from django.shortcuts import render, get_object_or_404, redirect, render_to_response
+from django.shortcuts import render, render_to_response, HttpResponse
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.db.models import Q
 from .models import Host, Business, Datacenter, Cluster
 from .form import HostForm
@@ -74,7 +74,7 @@ class HostListView(ListView):
         """
 
         context = super().get_context_data(**kwargs)
-		# paginator 是 Paginator 的一个实例，
+        # paginator 是 Paginator 的一个实例，
         # page_obj 是 Page 的一个实例，
         # is_paginated 是一个布尔变量，用于指示是否已分页。
         paginator = context.get('paginator')
@@ -104,18 +104,17 @@ class HostListView(ListView):
         """
         if not is_paginated:
             return {}
-
-		# 当前页左边连续的页码号，初始值为空
+        # 当前页左边连续的页码号，初始值为空
         left = []
-		# 当前页右边连续的页码号，初始值为空
+        # 当前页右边连续的页码号，初始值为空
         right = []
-		# 表示第 1 页页码后是否需要显示省略号
+        # 表示第 1 页页码后是否需要显示省略号
         left_has_more = False
-		# 表示最后一页页码前是否需要显示省略号
+        # 表示最后一页页码前是否需要显示省略号
         right_has_more = False
-		# 表示是否需要显示第 1 页的页码号
+        # 表示是否需要显示第 1 页的页码号
         first = False
-		# 表示是否需要显示最后一页的页码号
+        # 表示是否需要显示最后一页的页码号
         last = False
         
         page_number = page.number
@@ -123,14 +122,14 @@ class HostListView(ListView):
         page_range = paginator.page_range
 
         if page_number == 1:
-			# 获取当前页码后的3个页码
+            # 获取当前页码后的3个页码
             right = page_range[page_number:page_number + 3]
             if right[-1] < total_pages - 1:
                 right_has_more = True
             if right[-1] < total_pages:
                 last = True
         elif page_number == total_pages:
-			# 获取当前页码前连续3个页码
+            # 获取当前页码前连续3个页码
             left = page_range[(page_number - 4) if (page_number - 4) > 0 else 0:page_number -1]
             if left[0] > 2:
                 left_has_more = True
@@ -204,6 +203,9 @@ class HostAddView(CreateView):
     form_class = HostForm
 
     def form_invalid(self, form):
+        """
+        重写函数，表单数据不合法时，将指定参数传递给模版
+        """
         return self.render_to_response(
                 self.get_context_data(
                     form=form,
@@ -214,12 +216,12 @@ class HostAddView(CreateView):
 
     def form_valid(self, form):
         """
-        重写函数，使其返值为对host_add.html模版的渲染，并将指定参数传递给给模版
+        重写函数，表单数据合法时，保存表单数据，并将指定参数传递给给模版
         """
         self.object = form.save()
         return self.render_to_response(
                 self.get_context_data(
-                    form=self.form_class(),
+                    form=form,
                     tips='添加成功！',
                     display_control=' '
                     )
@@ -248,3 +250,18 @@ class HostEditView(UpdateView):
                     )
                 )
 
+def host_del(request):
+    # 当request请求为get时，删除指定的某条数据 
+    host_id = request.GET.get('id', '')
+    if host_id:
+        Host.objects.filter(id=host_id).delete()
+    # 当request请求为post时，删除指定的某些数据
+    if request.method == 'POST':
+        host_batch = request.GET.get('arg', '')
+        host_id_all = str(request.POST.get('host_id_all', ''))
+
+        if host_batch:
+            for host_id in host_id_all.split(','):
+                host_item = Host.objects.filter(id=host_id).delete()
+
+    return HttpResponse(u'删除成功')

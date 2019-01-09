@@ -156,9 +156,8 @@
                                     <td>{{ host.business }}</td>
                                     <td>{% for c in host.cluster.all %}{{ c }}{% if not forloop.last %},{% endif %}{% endfor %}</td>
                                     <td class="text-center" data-editable='false'>
-                                        <!-- a class="btn btn-sm btn-info" target="_blank" href="#" class="btn btn-xsbtn-info">WebSSH</a -->
                                         <a href="#"><li class="btn btn-sm btn-info" onclick="return tanchu(this.value)" value="{{ host.id }}">编辑</li></a>
-                                        <a value="#" class="btn btn-sm btn-danger host_del">删除</a>
+                                        <a value="{% url 'cmdb:host_del' %}?id={{ host.id }}" class="btn btn-sm btn-danger host_del">删除</a>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -218,6 +217,7 @@
 </script>
 <script>
 function tanchu(n){
+    // 调用弹层控件函数layer，弹出修改主机弹窗
     layer.open({
     type: 2,
     title: '修改主机信息',
@@ -231,11 +231,52 @@ function tanchu(n){
                 layer.msg('保存成功！',{
                     icon: 1,
                     time: 2000 //2秒关闭（如果不配置，默认是3秒）
+                }, function() {
+                    window.location.reload(); //重新加载页面
                 });
             }
         }
     });
 }
+</script>
+<script>
+    $(document).ready(function(){
+        // 点开头，修饰html段落中class所指定的host_del
+        $('.host_del').click(function(){
+            var row = $(this).closest('tr');
+            if (confirm("确定删除?")) {
+                // 用get方法请求{% url 'cmdb:host_del' %}?id={{ host.id }}
+                $.get(
+                        $(this).attr('value'),
+                        {},
+                        function (data) {
+                            row.remove()
+                        }
+                )
+            }
+        });
+    });
+</script>
+<script>
+    // #开头，修饰html段落中id所制定的host_del
+    $('#host_del').click(function () {
+        var host_id_all = getIDall();
+        if (host_id_all == ''){
+            alert("请至少选择一行!");
+            return false;
+        }
+        if (confirm("确定删除?")) {
+            // 用post方法请求{% url 'cmdb:host_del' %}?arg=batch
+            $.ajax({
+                type: "post",
+                data: {host_id_all: host_id_all,csrfmiddlewaretoken: '{{ csrf_token }}'},
+                url: "{% url 'cmdb:host_del' %}?arg=batch",
+                success: function () {
+                    parent.location.reload();
+                }
+            });
+        }
+    });
 </script>
 
 {% endblock %}
