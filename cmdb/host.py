@@ -1,10 +1,16 @@
+import datetime
+import xlwt
+
+from io import BytesIO
 from django.shortcuts import render, HttpResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.db.models import Q
 from .models import Host, Business, Datacenter, Cluster
 from .form import HostForm
+from .paginator import paginate
 
 class HostListView(ListView):
+    """ 主机列表视图 """
     model = Host
     template_name = 'cmdb/index.html'
 
@@ -19,6 +25,8 @@ class HostListView(ListView):
     host_status = None
     host_type = None
     keyword = None
+    export = None
+    host_id_all = None
     paginate_by = None
    
     def get(self, request, *args, **kwargs):
@@ -31,10 +39,15 @@ class HostListView(ListView):
         self.host_status = request.GET.get('status')
         self.host_type = request.GET.get('type')
         self.keyword = request.GET.get('keyword')
+        self.export = request.GET.get('export')
+        self.host_id_all = request.GET.getlist("id")
 		# 从视图获取每页显示的主机个数默认为10
 		# paginate_by是父类原有的变量，赋值后每页主机个数自动生效
         self.paginate_by = request.GET.get('paginate_by', '10')
-        response = super().get(request, *args, **kwargs)
+        if self.export:
+            response = create_host_excel(self.export, self.host_id_all) 
+        else:
+            response = super().get(request, *args, **kwargs)
         return response
 
     def get_queryset(self):
@@ -78,7 +91,7 @@ class HostListView(ListView):
         paginator = context.get('paginator')
         page = context.get('page_obj')
         is_paginated = context.get('is_paginated')
-        pagination_data = self.pagination_data(paginator, page, is_paginated)
+        pagination_data = paginate(paginator, page, is_paginated)
         context.update(
                 {
                 'datacenter_all': self.datacenter_all,
@@ -95,67 +108,9 @@ class HostListView(ListView):
         context.update(pagination_data)
         return context
 
-    def pagination_data(self, paginator, page, is_paginated):
-        """
-        该函数用来生成分页程序的变量数据
-        这些变量将通过get_context_data函数传输到模版
-        """
-        if not is_paginated:
-            return {}
-        # 当前页左边连续的页码号，初始值为空
-        left = []
-        # 当前页右边连续的页码号，初始值为空
-        right = []
-        # 表示第 1 页页码后是否需要显示省略号
-        left_has_more = False
-        # 表示最后一页页码前是否需要显示省略号
-        right_has_more = False
-        # 表示是否需要显示第 1 页的页码号
-        first = False
-        # 表示是否需要显示最后一页的页码号
-        last = False
-        
-        page_number = page.number
-        total_pages = paginator.num_pages
-        page_range = paginator.page_range
-
-        if page_number == 1:
-            # 获取当前页码后的3个页码
-            right = page_range[page_number:page_number + 3]
-            if right[-1] < total_pages - 1:
-                right_has_more = True
-            if right[-1] < total_pages:
-                last = True
-        elif page_number == total_pages:
-            # 获取当前页码前连续3个页码
-            left = page_range[(page_number - 4) if (page_number - 4) > 0 else 0:page_number -1]
-            if left[0] > 2:
-                left_has_more = True
-            if left[0] > 1:
-                first = True
-        else:
-            left = page_range[(page_number - 4) if (page_number - 4) > 0 else 0:page_number -1]
-            right = page_range[page_number:page_number + 3]
-            if left[0] > 2:
-                left_has_more = True
-            if left[0] > 1:
-                first = True
-            if right[-1] < total_pages - 1:
-                right_has_more = True
-            if right[-1] < total_pages:
-                last = True
-
-        data = {
-            'left': left,
-            'right': right,
-            'left_has_more': left_has_more,
-            'right_has_more': right_has_more,
-            'first': first,
-            'last': last,
-        }
-        return data
 
 class HostDetailView(DetailView):
+    """ 主机详情视图 """
     model = Host
     template_name = 'cmdb/host_detail.html'
 
@@ -196,6 +151,7 @@ class HostDetailView(DetailView):
         return context
 
 class HostAddView(CreateView):
+    """ 添加主机视图 """
     model = Host
     template_name_suffix = '_add'
     form_class = HostForm
@@ -226,6 +182,7 @@ class HostAddView(CreateView):
                 )
 
 class HostEditView(UpdateView):
+    """ 主机编辑视图 """
     model = Host
     template_name_suffix = '_edit'
     form_class = HostForm
@@ -247,8 +204,8 @@ class HostEditView(UpdateView):
                     status='1'
                     )
                 )
-
 def host_del(request):
+    """ 添加删除视图 """
     # 当request请求为get时，删除指定的某条数据 
     host_id = request.GET.get('id', '')
     if host_id:
@@ -262,4 +219,173 @@ def host_del(request):
             for host_id in host_id_all.split(','):
                 host_item = Host.objects.filter(id=host_id).delete()
 
-    return HttpResponse(u'删除成功')
+    return HttpResponse('删除成功')
+
+def create_host_excel(export, host_id_all):
+    # 样式初始化
+    style = xlwt.XFStyle()
+    # 设置字体
+    font = xlwt.Font()
+    font.height = 20 * 12
+    style.font = font
+    # 设置对齐方式
+    alignment = xlwt.Alignment()
+    alignment.horz = xlwt.Alignment.HORZ_CENTER
+    alignment.vert = xlwt.Alignment.VERT_CENTER
+    alignment.wrap = xlwt.Alignment.WRAP_AT_RIGHT
+    style.alignment = alignment
+    # 设置时间格式
+    date_format = xlwt.XFStyle()
+    date_format.num_format_str = 'yyyy-mm-dd hh:mm'
+    date_format.alignment = alignment
+    date_format.font = font
+    # 创建工作薄
+    wb = xlwt.Workbook(encoding='utf-8')
+    # 创建sheet
+    ws = wb.add_sheet("主机列表")
+    # 设置单元格长宽
+    ws.col(0).width=100*30
+    ws.col(1).width=250*30
+    ws.col(2).width=150*30
+    ws.col(3).width=150*30
+    ws.col(4).width=150*30
+    ws.col(5).width=250*30
+    ws.col(6).width=200*30
+    ws.col(7).width=400*30
+    ws.col(8).width=100*30
+    ws.col(9).width=100*30
+    ws.col(10).width=100*30
+    ws.col(11).width=100*30
+    ws.col(12).width=100*30
+    ws.col(13).width=100*30
+    ws.col(14).width=100*30
+    ws.col(15).width=150*30
+    ws.col(16).width=400*30
+    ws.col(17).width=150*30
+    ws.col(18).width=100*30
+    ws.col(19).width=100*30
+    ws.col(20).width=100*30
+    ws.col(21).width=100*30
+    ws.col(22).width=100*30
+    ws.col(23).width=100*30
+    ws.col(24).width=200*30
+    ws.col(25).width=200*30
+    ws.col(26).width=100*30
+    ws.col(27).width=100*30
+    ws.col(28).width=400*30
+    # 写入表头数据
+    ws.write(0, 0, "主机类型", style)
+    ws.write(0, 1, "主机名或fqdn名", style)
+    ws.write(0, 2, "IPMI地址", style)
+    ws.write(0, 3, "管理IP地址", style)
+    ws.write(0, 4, "外网IP地址", style)
+    ws.write(0, 5, "其它IP", style)
+    ws.write(0, 6, "管理网MAC地址", style)
+    ws.write(0, 7, "CPU型号", style)
+    ws.write(0, 8, "CPU个数", style)
+    ws.write(0, 9, "cpu逻辑核心数", style)
+    ws.write(0, 10, "内存大小(MB)", style)
+    ws.write(0, 11, "磁盘大小(GB)", style)
+    ws.write(0, 12, "操作系统类型", style)
+    ws.write(0, 13, "操作系统名称", style)
+    ws.write(0, 14, "操作系统位数", style)
+    ws.write(0, 15, "所属业务", style)
+    ws.write(0, 16, "所属集群", style)
+    ws.write(0, 17, "所属数据中心", style)
+    ws.write(0, 18, "所属机柜", style)
+    ws.write(0, 19, "主机状态", style)
+    ws.write(0, 20, "SN号", style)
+    ws.write(0, 21, "厂商", style)
+    ws.write(0, 22, "质保年限", style)
+    ws.write(0, 23, "SLA级别", style)
+    ws.write(0, 24, "上架时间", style)
+    ws.write(0, 25, "上次修改时间", style)
+    ws.write(0, 26, "主要维护人", style)
+    ws.write(0, 27, "备份维护人", style)
+    ws.write(0, 28, "备注", style)
+    # 生成主机列表或QuerySet
+    if export == "true":
+        if host_id_all:
+            host_find = []
+            for host_id in host_id_all:
+                host_item = Host.objects.get(pk=host_id)
+                if host_item:
+                    host_find.append(host_item)
+    elif export == "all":
+        host_find = Host.objects.all()
+    # 写入主机信息数据
+    excel_row = 1
+    for host in host_find:
+        host_type_this = ''
+        host_status_this = ''
+        os_type_this = ''
+        business_this = ''
+        datacenter_this = ''
+        cabinet_this = ''
+        cluster_list = []
+        # 生成出主机类型别名
+        for htype in Host.HOST_TYPE_CHOICES:
+            if htype[0] == host.host_type:
+                host_type_this = htype[1]
+        # 生成出主机状态别名
+        for hstatus in Host.HOST_STATUS_CHOICES:
+            if hstatus[0] == host.host_status:
+                host_status_this = hstatus[1]
+        # 生成出操作系统类型别名
+        for otype in Host.OS_TYPE_CHOICES:
+            if otype[0] == host.os_type:
+                os_type_this = otype[1]
+        # 生成业务名称
+        if host.business:
+            business_this = host.business.name
+        # 生成数据中心名称
+        if host.datacenter:
+            datacenter_this = host.datacenter.name
+        # 生成机柜名称
+        if host.cabinet:
+            cabinet_this = host.cabinet.name
+        # 生成集群名称的字符串，以逗号间隔
+        for cluster in host.cluster.all():
+            cluster_list.append(cluster)
+        cluster_this = ",".join(str(c) for c in cluster_list) 
+
+        ws.write(excel_row, 0, host_type_this, style)
+        ws.write(excel_row, 1, host.host_name, style)
+        ws.write(excel_row, 2, host.ipmi_ip, style)
+        ws.write(excel_row, 3, host.host_innerip, style)
+        ws.write(excel_row, 4, host.host_outerip, style)
+        ws.write(excel_row, 5, host.other_ip, style)
+        ws.write(excel_row, 6, host.mac_addr, style)
+        ws.write(excel_row, 7, host.cpu_module, style)
+        ws.write(excel_row, 8, host.cpu_num, style)
+        ws.write(excel_row, 9, host.cpu_core_count, style)
+        ws.write(excel_row, 10, host.mem_mb, style)
+        ws.write(excel_row, 11, host.disk_gb, style)
+        ws.write(excel_row, 12, host.os_type, style)
+        ws.write(excel_row, 13, host.os_name, style)
+        ws.write(excel_row, 14, host.os_bit, style)
+        ws.write(excel_row, 15, business_this, style)
+        ws.write(excel_row, 16, cluster_this, style)
+        ws.write(excel_row, 17, datacenter_this, style)
+        ws.write(excel_row, 18, cabinet_this, style)
+        ws.write(excel_row, 19, host_status_this, style)
+        ws.write(excel_row, 20, host.sn, style)
+        ws.write(excel_row, 21, host.manufacturer, style)
+        ws.write(excel_row, 22, host.service_term, style)
+        ws.write(excel_row, 23, host.sla, style)
+        ws.write(excel_row, 24, host.created_time, date_format)
+        ws.write(excel_row, 25, host.modified_time, date_format)
+        ws.write(excel_row, 26, host.manager, style)
+        ws.write(excel_row, 27, host.bak_manager, style)
+        ws.write(excel_row, 28, host.comment, style)
+        excel_row += 1
+
+    now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+    file_name = 'sunshine_cmdb_' + now + '.xls'
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    response = HttpResponse(bio.getvalue(), content_type='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename='+file_name
+    response.write(bio.getvalue())
+    return response
