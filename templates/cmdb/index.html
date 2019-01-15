@@ -88,7 +88,7 @@
                                 <button id='search_btn' href="#" type="button" class="btn btn-primary "  onclick="change_info()"> <b>&nbsp;搜索&nbsp;</b>
                                 </button>
                                 <a href="#" onclick="return export_excel()"><li name="export" class="btn btn-success search-btn-excel"><b>&nbsp;导出&nbsp;</b></li></a>
-                                <a href="#" onclick="#"><li name="export" class="btn btn-success search-btn-excel"><b>&nbsp;导入&nbsp;</b></li></a>
+                                <a href="#"><li class="btn btn-success search-btn-excel" onclick="return host_import()"><b>&nbsp;导入&nbsp;</b></li></a>
                             </div>
                         </div>
                     </div>
@@ -293,5 +293,36 @@ function tanchu(n){
                 window.location = "{% url 'cmdb:hosts' %}?export=true&" + args
             }
     }
+</script>
+<script>
+function host_import(){
+    layer.open({
+    type: 2,
+    title: 'Host Import',
+    closeBtn: 1,
+    area: ['450px', '350px'],
+    shadeClose: true, //点击遮罩关闭
+    content: ['/cmdb/host/import/'],
+    end:function(){
+    var handle_status = $("#handle_status").val();
+    if ( handle_status == '1' ) {
+        layer.msg('导入成功！',{
+            icon: 1,
+            time: 2000 //2秒关闭（如果不配置，默认是3秒）
+        },function(){
+            parent.location.reload();
+        });
+    } else if ( handle_status == '2' ) {
+        layer.msg('导入失败！',{
+            icon: 2,
+            time: 2000 //2秒关闭（如果不配置，默认是3秒）
+        },function(){
+            parent.location.reload();
+        });
+    }
+}
+
+  });
+}
 </script>
 {% endblock %}

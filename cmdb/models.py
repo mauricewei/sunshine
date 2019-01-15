@@ -139,11 +139,11 @@ class Host(models.Model):
     )
     other_ip = models.CharField("其它IP", max_length=60, blank=True)
     mac_addr = models.CharField('管理网MAC地址', max_length=60, blank=True)
-    cpu_module = models.CharField('cpu型号', max_length=100, blank=True)
-    cpu_num = models.CharField('cpu个数', max_length=100, blank=True)
-    cpu_core_count = models.CharField('cpu逻辑核心数', max_length=100, blank=True)
-    mem_mb = models.CharField('内存大小(MB)', max_length=60, blank=True)
-    disk_gb = models.CharField('磁盘大小(GB)', max_length=60, blank=True)
+    cpu_module = models.CharField('CPU型号', max_length=100, blank=True)
+    cpu_num = models.IntegerField('CPU个数', blank=True, null=True)
+    cpu_core_count = models.IntegerField('CPU逻辑核心数', blank=True, null=True)
+    mem_mb = models.IntegerField('内存大小(MB)', blank=True, null=True)
+    disk_gb = models.IntegerField('磁盘大小(GB)', blank=True, null=True)
     os_type = models.CharField(
             '操作系统类型',
             max_length=60,
@@ -152,7 +152,7 @@ class Host(models.Model):
             default='linux',
     )
     os_name = models.CharField('操作系统名称', max_length=60, blank=True)
-    os_bit = models.CharField('操作系统位数', max_length=60, blank=True)
+    os_bit = models.IntegerField('操作系统位数', blank=True, null=True)
     business = models.ForeignKey(
             Business,
             verbose_name='所属业务',
@@ -187,7 +187,7 @@ class Host(models.Model):
     )
     sn = models.CharField('SN号', max_length=60, blank=True)
     manufacturer = models.CharField('厂商', max_length=100, blank=True)
-    service_term = models.CharField('质保年限', max_length=100, blank=True)
+    service_term = models.IntegerField('质保年限', blank=True, null=True)
     sla = models.CharField(
             'SLA级别',
             max_length=60,

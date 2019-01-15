@@ -23,4 +23,5 @@ urlpatterns = [
     path('host/add/', host.HostAddView.as_view(), name='host_add'),
     path('host/edit/<int:pk>/', host.HostEditView.as_view(), name='host_edit'),
     path('host/del/', host.host_del, name='host_del'),
+    path('host/import/', host.host_import, name='host_import'),
 ]
