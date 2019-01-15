@@ -45,8 +45,8 @@ class HostListView(ListView):
         self.keyword = request.GET.get('keyword')
         self.export = request.GET.get('export')
         self.host_id_all = request.GET.getlist("id")
-		# 从视图获取每页显示的主机个数默认为10
-		# paginate_by是父类原有的变量，赋值后每页主机个数自动生效
+        # 从视图获取每页显示的主机个数默认为10
+        # paginate_by是父类原有的变量，赋值后每页主机个数自动生效
         self.paginate_by = request.GET.get('paginate_by', '10')
         if self.export:
             response = create_host_excel(self.export, self.host_id_all) 
@@ -209,7 +209,7 @@ class HostEditView(UpdateView):
                 )
 
 def host_del(request):
-    """ 添加删除视图 """
+    """ 删除视图 """
     # 当request请求为get时，删除指定的某条数据 
     host_id = request.GET.get('id', '')
     if host_id:
@@ -474,7 +474,7 @@ def host_import(request):
                 host.other_ip = str(row_data[5])
                 host.mac_addr = row_data[6]
                 host.cpu_module = row_data[7]
-                host.cpu_num = str(row_data[8])
+                host.cpu_num = row_data[8]
                 host.cpu_core_count = row_data[9]
                 host.mem_mb = row_data[10]
                 host.disk_gb = row_data[11]
