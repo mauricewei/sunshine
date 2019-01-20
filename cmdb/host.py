@@ -13,6 +13,7 @@ from .models import Host, Business, Datacenter, Cabinet, Cluster
 from .form import HostForm
 from .paginator import paginate
 
+
 class HostListView(ListView):
     """ 主机列表视图 """
     model = Host
@@ -32,7 +33,7 @@ class HostListView(ListView):
     export = None
     host_id_all = None
     paginate_by = None
-   
+
     def get(self, request, *args, **kwargs):
         """
         重写get函数，获取我们需要的request参数
@@ -49,38 +50,42 @@ class HostListView(ListView):
         # paginate_by是父类原有的变量，赋值后每页主机个数自动生效
         self.paginate_by = request.GET.get('paginate_by', '10')
         if self.export:
-            response = create_host_excel(self.export, self.host_id_all) 
+            response = create_host_excel(self.export, self.host_id_all)
         else:
             response = super().get(request, *args, **kwargs)
         return response
 
     def get_queryset(self):
-        """ 
+        """
         重写get_query_set函数，根据条件查询数据库
         用于实现页面上筛选和搜索功能
         """
         if self.datacenter:
-            self.host_find = self.host_find.filter(datacenter__name__icontains=self.datacenter)
+            self.host_find = self.host_find.filter(
+                datacenter__name__icontains=self.datacenter)
         if self.business:
-            self.host_find = self.host_find.filter(business__name__icontains=self.business)
+            self.host_find = self.host_find.filter(
+                business__name__icontains=self.business)
         if self.host_status:
-            self.host_find = self.host_find.filter(host_status__icontains=self.host_status)
+            self.host_find = self.host_find.filter(
+                host_status__icontains=self.host_status)
         if self.host_type:
-            self.host_find = self.host_find.filter(host_type__icontains=self.host_type)
+            self.host_find = self.host_find.filter(
+                host_type__icontains=self.host_type)
         if self.keyword:
             self.host_find = self.host_find.filter(
-                    Q(host_name__icontains=self.keyword) |
-                    Q(ipmi_ip__icontains=self.keyword) |
-                    Q(host_outerip__icontains=self.keyword) |
-                    Q(host_innerip__icontains=self.keyword) |
-                    Q(manufacturer__icontains=self.keyword) |
-                    Q(sn__icontains=self.keyword) |
-                    Q(os_type__icontains=self.keyword) |
-                    Q(os_name__icontains=self.keyword) |
-                    Q(other_ip__icontains=self.keyword) |
-                    Q(mac_addr__icontains=self.keyword) |
-                    Q(cabinet__name__icontains=self.keyword)
-                    )
+                Q(host_name__icontains=self.keyword) |
+                Q(ipmi_ip__icontains=self.keyword) |
+                Q(host_outerip__icontains=self.keyword) |
+                Q(host_innerip__icontains=self.keyword) |
+                Q(manufacturer__icontains=self.keyword) |
+                Q(sn__icontains=self.keyword) |
+                Q(os_type__icontains=self.keyword) |
+                Q(os_name__icontains=self.keyword) |
+                Q(other_ip__icontains=self.keyword) |
+                Q(mac_addr__icontains=self.keyword) |
+                Q(cabinet__name__icontains=self.keyword)
+            )
         return self.host_find
 
     def get_context_data(self, **kwargs):
@@ -97,7 +102,7 @@ class HostListView(ListView):
         is_paginated = context.get('is_paginated')
         pagination_data = paginate(paginator, page, is_paginated)
         context.update(
-                {
+            {
                 'datacenter_all': self.datacenter_all,
                 'business_all': self.business_all,
                 'host_status_all': self.host_status_all,
@@ -107,10 +112,11 @@ class HostListView(ListView):
                 'host_status': self.host_status,
                 'host_type': self.host_type,
                 'paginate_by': self.paginate_by,
-                }
-                )
+            }
+        )
         context.update(pagination_data)
         return context
+
 
 class HostDetailView(DetailView):
     """ 主机详情视图 """
@@ -144,14 +150,15 @@ class HostDetailView(DetailView):
                 os_type_this = otype[1]
 
         context.update(
-                {
+            {
                 'host_type_this': host_type_this,
                 'host_status_this': host_status_this,
                 'os_type_this': os_type_this,
                 'cluster_this': cluster_this,
-                }
-                )
+            }
+        )
         return context
+
 
 class HostAddView(CreateView):
     """ 添加主机视图 """
@@ -164,12 +171,12 @@ class HostAddView(CreateView):
         重写函数，表单数据不合法时，将指定参数传递给模版
         """
         return self.render_to_response(
-                self.get_context_data(
-                    form=form,
-                    tips='添加失败！',
-                    display_control=' '
-                    )
-                )
+            self.get_context_data(
+                form=form,
+                tips='添加失败！',
+                display_control=' '
+            )
+        )
 
     def form_valid(self, form):
         """
@@ -177,12 +184,13 @@ class HostAddView(CreateView):
         """
         self.object = form.save()
         return self.render_to_response(
-                self.get_context_data(
-                    form=form,
-                    tips='添加成功！',
-                    display_control=' '
-                    )
-                )
+            self.get_context_data(
+                form=form,
+                tips='添加成功！',
+                display_control=' '
+            )
+        )
+
 
 class HostEditView(UpdateView):
     """ 主机编辑视图 """
@@ -191,7 +199,7 @@ class HostEditView(UpdateView):
     form_class = HostForm
 
     def get_success_url(self):
-        """ 
+        """
         重写函数，将表单数据填写成功后返回的url指定为/cmdb/host/edit/x
         """
         path = self.request.path
@@ -203,14 +211,15 @@ class HostEditView(UpdateView):
         """
         self.object = form.save()
         return self.render_to_response(
-                self.get_context_data(
-                    status='1'
-                    )
-                )
+            self.get_context_data(
+                status='1'
+            )
+        )
+
 
 def host_del(request):
     """ 删除视图 """
-    # 当request请求为get时，删除指定的某条数据 
+    # 当request请求为get时，删除指定的某条数据
     host_id = request.GET.get('id', '')
     if host_id:
         Host.objects.filter(id=host_id).delete()
@@ -225,8 +234,9 @@ def host_del(request):
 
     return HttpResponse('删除成功')
 
+
 def create_host_excel(export, host_id_all):
-    """ 
+    """
     该函数用来创建主机信息文件,并返回response对象
     """
     # 样式初始化
@@ -251,35 +261,35 @@ def create_host_excel(export, host_id_all):
     # 创建sheet
     ws = wb.add_sheet("主机信息")
     # 设置单元格长宽
-    ws.col(0).width=100*30
-    ws.col(1).width=250*30
-    ws.col(2).width=150*30
-    ws.col(3).width=150*30
-    ws.col(4).width=150*30
-    ws.col(5).width=250*30
-    ws.col(6).width=200*30
-    ws.col(7).width=400*30
-    ws.col(8).width=100*30
-    ws.col(9).width=100*30
-    ws.col(10).width=100*30
-    ws.col(11).width=100*30
-    ws.col(12).width=100*30
-    ws.col(13).width=100*30
-    ws.col(14).width=100*30
-    ws.col(15).width=150*30
-    ws.col(16).width=400*30
-    ws.col(17).width=150*30
-    ws.col(18).width=100*30
-    ws.col(19).width=100*30
-    ws.col(20).width=300*30
-    ws.col(21).width=100*30
-    ws.col(22).width=100*30
-    ws.col(23).width=100*30
-    ws.col(24).width=200*30
-    ws.col(25).width=200*30
-    ws.col(26).width=100*30
-    ws.col(27).width=100*30
-    ws.col(28).width=400*30
+    ws.col(0).width = 100*30
+    ws.col(1).width = 250*30
+    ws.col(2).width = 150*30
+    ws.col(3).width = 150*30
+    ws.col(4).width = 150*30
+    ws.col(5).width = 250*30
+    ws.col(6).width = 200*30
+    ws.col(7).width = 400*30
+    ws.col(8).width = 100*30
+    ws.col(9).width = 100*30
+    ws.col(10).width = 100*30
+    ws.col(11).width = 100*30
+    ws.col(12).width = 100*30
+    ws.col(13).width = 100*30
+    ws.col(14).width = 100*30
+    ws.col(15).width = 150*30
+    ws.col(16).width = 400*30
+    ws.col(17).width = 150*30
+    ws.col(18).width = 100*30
+    ws.col(19).width = 100*30
+    ws.col(20).width = 300*30
+    ws.col(21).width = 100*30
+    ws.col(22).width = 100*30
+    ws.col(23).width = 100*30
+    ws.col(24).width = 200*30
+    ws.col(25).width = 200*30
+    ws.col(26).width = 100*30
+    ws.col(27).width = 100*30
+    ws.col(28).width = 400*30
     # 写入表头数据
     ws.write(0, 0, "主机类型", style)
     ws.write(0, 1, "主机名或fqdn名", style)
@@ -354,7 +364,7 @@ def create_host_excel(export, host_id_all):
         # 生成集群名称的字符串，以逗号间隔
         for cluster in host.cluster.all():
             cluster_list.append(cluster)
-        cluster_this = ",".join(str(c) for c in cluster_list) 
+        cluster_this = ",".join(str(c) for c in cluster_list)
 
         ws.write(excel_row, 0, host_type_this, style)
         ws.write(excel_row, 1, host.host_name, style)
@@ -392,13 +402,15 @@ def create_host_excel(export, host_id_all):
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
-    response = HttpResponse(bio.getvalue(), content_type='application/vnd.ms-excel')
+    response = HttpResponse(
+        bio.getvalue(), content_type='application/vnd.ms-excel')
     response['Content-Disposition'] = 'attachment; filename='+file_name
     response.write(bio.getvalue())
     return response
 
+
 def host_import(request):
-    """ 
+    """
     该函数用来处理导入的主机信息文件
     """
     status = 0
@@ -406,21 +418,21 @@ def host_import(request):
         f = request.FILES.get('host_import')
         wb = xlrd.open_workbook(filename=None, file_contents=f.read())
         table = wb.sheets()[0]
-        nrows = table.nrows  #行数
-        ncole = table.ncols  #列数
+        nrows = table.nrows  # 行数
+        ncole = table.ncols  # 列数
         # 简单判断表头是否符合格式要求
         title_data = table.row_values(0)
         if title_data[0] == "主机类型" and title_data[15] == "所属业务" and \
-        title_data[28] == "备注":
-            pass    
+                title_data[28] == "备注":
+            pass
         else:
             print("Excel title Error!")
             return render(request, 'cmdb/host_import.html', {'status': 2})
-        
+
         # 尝试将Excel每一行信息写入数据库
         try:
             for line in range(1, nrows):
-                row_data = table.row_values(line)  #一行的数据
+                row_data = table.row_values(line)  # 一行的数据
                 try:
                     host = Host.objects.get(host_innerip=row_data[3])
                 except Exception as msg:
@@ -485,10 +497,10 @@ def host_import(request):
                 host.service_term = row_data[22]
                 host.sla = row_data[23]
                 # 将Excel时间戳转换为标准时间格式
-                c_time = datetime.datetime(*xldate_as_tuple(row_data[24],0))
+                c_time = datetime.datetime(*xldate_as_tuple(row_data[24], 0))
                 host.created_time = c_time.strftime("%Y-%m-%d %H:%M:%S")
                 # 将Excel时间戳转换为标准时间格式
-                m_time = datetime.datetime(*xldate_as_tuple(row_data[25],0))
+                m_time = datetime.datetime(*xldate_as_tuple(row_data[25], 0))
                 host.modified_time = m_time.strftime("%Y-%m-%d %H:%M:%S")
                 host.manager = row_data[26]
                 host.bak_manager = row_data[27]

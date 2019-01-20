@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+
 def paginate(paginator, page, is_paginated):
     """
     该函数用来生成分页程序的变量数据
@@ -19,7 +20,7 @@ def paginate(paginator, page, is_paginated):
     first = False
     # 表示是否需要显示最后一页的页码号
     last = False
-    
+
     page_number = page.number
     total_pages = paginator.num_pages
     page_range = paginator.page_range
@@ -33,13 +34,15 @@ def paginate(paginator, page, is_paginated):
             last = True
     elif page_number == total_pages:
         # 获取当前页码前连续3个页码
-        left = page_range[(page_number - 4) if (page_number - 4) > 0 else 0:page_number -1]
+        left = page_range[(page_number - 4) if (page_number - 4)
+                          > 0 else 0:page_number - 1]
         if left[0] > 2:
             left_has_more = True
         if left[0] > 1:
             first = True
     else:
-        left = page_range[(page_number - 4) if (page_number - 4) > 0 else 0:page_number -1]
+        left = page_range[(page_number - 4) if (page_number - 4)
+                          > 0 else 0:page_number - 1]
         right = page_range[page_number:page_number + 3]
         if left[0] > 2:
             left_has_more = True
