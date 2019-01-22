@@ -55,6 +55,19 @@
                         </label>
 
                         <label>
+                            <select name="cluster" class="form-control m-b input-sm" onchange="change_info()">
+                                <option value="">集群</option>
+                                {% for clu in  cluster_all %}
+                                    {% ifequal clu.name cluster_name %}
+                                        <option value="{{ clu.name }}" selected> {{ clu.name|slice:":20" }} </option>
+                                    {% else %}
+                                        <option value="{{ clu.name }}"> {{ clu.name|slice:":20" }} </option>
+                                    {% endifequal %}
+                                {% endfor %}
+                            </select>
+                        </label>
+
+                        <label>
                             <select name="status" class="form-control m-b input-sm" onchange="change_info()">
                                 <option value="">主机状态</option>
                                 {% for status in host_status_all %}

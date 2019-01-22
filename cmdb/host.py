@@ -3,6 +3,7 @@
 import datetime
 import xlwt
 import xlrd
+import urllib
 
 from xlrd import xldate_as_tuple
 from io import BytesIO
@@ -21,12 +22,14 @@ class HostListView(ListView):
 
     datacenter_all = Datacenter.objects.all()
     business_all = Business.objects.all()
+    cluster_all = Cluster.objects.all()
     host_status_all = Host.HOST_STATUS_CHOICES
     host_type_all = Host.HOST_TYPE_CHOICES
     host_find = Host.objects.all()
 
     datacenter = None
     business = None
+    cluster = None
     host_status = None
     host_type = None
     keyword = None
@@ -39,11 +42,12 @@ class HostListView(ListView):
         重写get函数，获取我们需要的request参数
         """
 
-        self.datacenter = request.GET.get('datacenter')
-        self.business = request.GET.get('business')
-        self.host_status = request.GET.get('status')
-        self.host_type = request.GET.get('type')
-        self.keyword = request.GET.get('keyword')
+        self.datacenter = request.GET.get('datacenter', '')
+        self.business = request.GET.get('business', '')
+        self.cluster = request.GET.get('cluster', '')
+        self.host_status = request.GET.get('status', '')
+        self.host_type = request.GET.get('type', '')
+        self.keyword = request.GET.get('keyword', '')
         self.export = request.GET.get('export')
         self.host_id_all = request.GET.getlist("id")
         # 从视图获取每页显示的主机个数默认为10
@@ -66,6 +70,9 @@ class HostListView(ListView):
         if self.business:
             self.host_find = self.host_find.filter(
                 business__name__icontains=self.business)
+        if self.cluster:
+            self.host_find = self.host_find.filter(
+                cluster__name__icontains=self.cluster)
         if self.host_status:
             self.host_find = self.host_find.filter(
                 host_status__icontains=self.host_status)
@@ -101,17 +108,30 @@ class HostListView(ListView):
         page = context.get('page_obj')
         is_paginated = context.get('is_paginated')
         pagination_data = paginate(paginator, page, is_paginated)
+        url_data = {
+            'datacenter': self.datacenter,
+            'business': self.business,
+            'cluster': self.cluster,
+            'status': self.host_status,
+            'type': self.host_type,
+            'keyword': self.keyword,
+            'paginate_by': self.paginate_by,
+        }
+        url_data_serialize = urllib.parse.urlencode(url_data)
         context.update(
             {
                 'datacenter_all': self.datacenter_all,
                 'business_all': self.business_all,
+                'cluster_all': self.cluster_all,
                 'host_status_all': self.host_status_all,
                 'host_type_all': self.host_type_all,
                 'datacenter_name': self.datacenter,
                 'business_name': self.business,
+                'cluster_name': self.cluster,
                 'host_status': self.host_status,
                 'host_type': self.host_type,
                 'paginate_by': self.paginate_by,
+                'url_data_serialize': url_data_serialize,
             }
         )
         context.update(pagination_data)
@@ -207,7 +227,8 @@ class HostEditView(UpdateView):
 
     def form_valid(self, form):
         """
-        重写函数，使其返值为对host_edit.html模版的渲染，并将status的参数传递给给模版
+        重写函数，使其返值为对host_edit.html模版的渲染
+        并将status的参数传递给给模版
         """
         self.object = form.save()
         return self.render_to_response(

@@ -4,7 +4,7 @@
             {% if is_paginated %}
             	{% if first %}
                     <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
-                        <a href="?page=1">1</a>
+                        <a href="?page=1&{{ url_data_serialize }}">1</a>
                     </li>
                 {% endif %}
                 {% if left %}
@@ -15,7 +15,7 @@
                     {% endif %}
                     {% for i in left %}
                         <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
-                            <a href="?page={{ i }}">{{ i }}</a>
+                            <a href="?page={{ i }}&{{ url_data_serialize }}">{{ i }}</a>
                         </li>
                     {% endfor%}
                 {% endif %}
@@ -23,7 +23,7 @@
             	{% if right %}
             	    {% for i in right %}
                         <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
-            	            <a href="?page={{ i }}">{{ i }}</a>
+                          <a href="?page={{ i }}&{{ url_data_serialize }}">{{ i }}</a>
                         </li>
             	    {% endfor %}
             	    {% if right_has_more %}
@@ -34,7 +34,7 @@
             	{% endif %}
             	{% if last %}
                     <li class="paginate_button previous" aria-controls="editable" tabindex="0" id="editable_previous">
-            	        <a href="?page={{ paginator.num_pages }}">{{ paginator.num_pages }}</a>
+                      <a href="?page={{ paginator.num_pages }}&{{ url_data_serialize }}">{{ paginator.num_pages }}</a>
                     </li>
             	{% endif %}
             {% endif %}
